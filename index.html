@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZRBT9DCW3F"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-ZRBT9DCW3F');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <!-- <script src="http://popcornjs.org/code/dist/popcorn-complete.js"></script> -->
+</head>
+<body>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title" style="font-size:28px;">
+		ReMEmbR: Building and Reasoning Over
+		Long-Horizon Spatio-Temporal Memory for Robot Navigation
+	  </h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://research.nvidia.com/person/bowen-wen">Abrar Anwar</a><sup>1,2</sup>,
+              <a href="https://research.nvidia.com/person/wei-yang">John Welsh</a><sup>1</sup>,
+              <a href="https://research.nvidia.com/person/jan-kautz">Joydeep Biswas</a>1,3</sup>,
+              <a href="https://research.nvidia.com/person/stan-birchfield">Soha Pouya</a>1</sup>
+              <a href="https://research.nvidia.com/person/stan-birchfield">Yan Chang</a>1</sup>
+            </span>
+            <span class="author-block">
+              <span><sup>1</sup>NVIDIA, </span>
+              <span><sup>2</sup>University of Southern California, </span>
+              <span><sup>3</sup>University of Texas at Austin</span>
+            </span>
+          </div>
+          <br>
+
+          <!-- <div class="is-size-5 publication-authors">
+            <span class="author-block"></sup>NVIDIA</span>
+          </div> -->
+
+          <!-- <img src="static/images/nvlogo.png" style="max-height: 150px"> -->
+
+          <div style="font-size:30px; font-weight: bold;">
+            <!-- CVPR 2024 <span style="color:red">(Highlight) </span> -->
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="#" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+
+              <!-- Video Link. -->
+              <!-- <span class="link-block">
+                <a href="" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span> -->
+              <!-- Code Link. -->
+
+              <span class="link-block">
+                <a href="https://github.com/NVIDIA-AI-IOT/remembr" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+
+            Navigating and understanding complex environments 
+            over extended periods of time is a significant challenge
+            for robots. People interacting with the robot may want to ask
+            questions like where something happened, when it occurred, or
+            how long ago it took place, which would require the robot to
+            reason over a long history of their deployment. To address
+            this problem, we introduce a Retrieval-augmented Memory
+            for Embodied Robots, or ReMEmbR, a system designed for
+            long-horizon video question answering for robot navigation.
+            To evaluate ReMEmbR, we introduce the NaVQA dataset
+            where we annotate spatial, temporal, and descriptive questions
+            to long-horizon robot navigation videos. ReMEmbR employs
+            a structured approach involving a memory building and a
+            querying phase, leveraging temporal information, spatial information,
+            and images to efficiently handle continuously growing
+            robot histories. Our experiments demonstrate that ReMEmbR
+            outperforms LLM and VLM baselines, allowing ReMEmbR
+            to achieve effective long-horizon reasoning with low latency.
+            Additionally, we deploy ReMEmbR on a robot and show that
+            our approach can handle diverse queries.
+
+          </p>
+        </div>
+        <img src="static/images/fig1.png" width="100%">
+      </div>
+    </div>
+
+    <br>
+    <br>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Memory Building and Evaluation</h2>
+
+        <p style="text-align: left;">
+
+					We design ReMEmbR with a memory building phase and a 
+					querying phase. The memory building phase runs
+					a VILA video captioning model, embeds the caption,
+					then stores the caption embedding, position, and time 
+					vectors into a vector database. Then, when a user asks 
+					a question, a vector database querying loop starts with 
+					an LLM. (Right) Then, we evaluate ReMEmbR on the NaVQA 
+					dataset which we construct. NaVQA consists of three types 
+					of questions as shown above. Then we deploy ReMEmbR 
+					on a robot.
+				</p>
+				<br>
+
+        <img src="static/images/fig2.png" width="100%">
+
+      </div>
+    </div>
+
+    <br>
+    <br>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Evaluation Dataset</h2>
+        <p style="text-align: left;">
+
+					We introduce the NaVQA dataset, which is composed
+					of 210 examples across three different time ranges up to 20
+					minutes in length. The dataset consists of spatial, temporal,
+					and descriptive questions, each of which has different types
+					of outputs as shown above.
+
+				</p>
+				<br>
+				<img src="static/images/dataset_stats.png" width="100%">
+
+      </div>
+    </div>
+
+    <br>
+    <br>
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Results</h2>
+
+        <p style="text-align: left;">
+
+				We compare ReMEmbR to an approach that processes all 
+				captions at once and another that processes all
+				frames at once. We find that GPT4o-based approaches 
+				perform the best, and that ReMEmbR outperforms the LLM-based
+				method and remains competitive to the VLM-based approach 
+				on the Short videos. The Medium and Long videos are too
+				long for the VLM to process, and thus is marked with an ✗.
+
+				</p>
+
+				<br>
+
+        <img src="static/images/results.png" width="100%">
+      </div>
+    </div>
+
+    <br>
+    <br>
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Deployment</h2>
+        <p style="text-align: left;">
+
+				We deploy ReMEmbR on a Nova Carter robot. We run 
+				the memory building phase for
+				25 minutes, and then begin to ask navigation-centric ques-
+				tions The robot successfully handles various instructions,
+				including those with more ambiguous instructions such as
+				going to somewhere with a nice view. However, we found
+				that ReMEmbR often confuses some objects such as soda
+				machines and water fountains, leading to incorrect goals.
+
+				</p>
+				<br>
+        <img src="static/images/deployment_fig.png" width="100%">
+      </div>
+    </div>
+
+    <br>
+    <br>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Demo Video</h2>
+        <div class="publication-video">
+
+					<p style="text-align: left;">
+					</p>
+
+					<video style="text-align:center; width:100%" id="v3" autoplay muted loop playsinline controls height="100%">
+						<source src="static/videos/demo.mp4" type="video/mp4">
+					</video>
+
+					<!-- <iframe src="https://www.youtube.com/embed/Ip_yWsGUF6c?si=qnkJtKPyeIl85WMx" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe> -->
+
+        </div>
+      </div>
+    </div>
+
+
+
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            Website taken from
+              <a href="https://github.com/nerfies/nerfies.github.io">here</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
