@@ -169,6 +169,7 @@
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
         <h2 class="title is-3">Video</h2>
+        <br>
         <div class="publication-video">
             <p style="text-align: left;">
             </p>
@@ -188,45 +189,41 @@
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
         <h2 class="title is-3">Memory Building and Evaluation</h2>
-
+        <br>
         <p style="text-align: left;">
-
-					We design ReMEmbR with a memory building phase and a 
-					querying phase. The memory building phase runs
-					a VILA video captioning model, embeds the caption,
-					then stores the caption embedding, position, and time 
-					vectors into a vector database. Then, when a user asks 
-					a question, a vector database querying loop starts with 
-					an LLM. (Right) Then, we evaluate ReMEmbR on the NaVQA 
-					dataset which we construct. NaVQA consists of three types 
-					of questions as shown above. Then we deploy ReMEmbR 
-					on a robot.
-				</p>
-				<br>
-
+            We design ReMEmbR with a memory building phase and a 
+            querying phase. The memory building phase runs
+            a VILA video captioning model, embeds the caption,
+            then stores the caption embedding, position, and time 
+            vectors into a vector database. Then, when a user asks 
+            a question, a vector database querying loop starts with 
+            an LLM. (Right) Then, we evaluate ReMEmbR on the NaVQA 
+            dataset which we construct. NaVQA consists of three types 
+            of questions as shown above. Then we deploy ReMEmbR 
+            on a robot.
+        </p>
+        <br>
+        <br>
         <img src="static/images/fig2.png" width="100%">
-
       </div>
     </div>
 
     <br>
     <br>
-
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
         <h2 class="title is-3">Evaluation Dataset</h2>
+        <br>
         <p style="text-align: left;">
-
-					We introduce the NaVQA dataset, which is composed
-					of 210 examples across three different time ranges up to 20
-					minutes in length. The dataset consists of spatial, temporal,
-					and descriptive questions, each of which has different types
-					of outputs as shown above.
-
-				</p>
-				<br>
-				<img src="static/images/dataset_stats.png" width="100%">
-
+            We introduce the NaVQA dataset, which is composed
+            of 210 examples across three different time ranges up to 20
+            minutes in length. The dataset consists of spatial, temporal,
+            and descriptive questions, each of which has different types
+            of outputs as shown above.
+        </p>
+        <br>
+        <br>
+        <img src="static/images/dataset_stats.png" width="100%">
       </div>
     </div>
 
@@ -235,15 +232,17 @@
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
         <h2 class="title is-3">Results</h2>
+        <br>
         <p style="text-align: left;">
-				We compare ReMEmbR to an approach that processes all 
-				captions at once and another that processes all
-				frames at once. We find that GPT4o-based approaches 
-				perform the best, and that ReMEmbR outperforms the LLM-based
-				method and remains competitive to the VLM-based approach 
-				on the Short videos. The Medium and Long videos are too
-				long for the VLM to process, and thus is marked with an ✗.
+            We compare ReMEmbR to an approach that processes all 
+            captions at once and another that processes all
+            frames at once. We find that GPT4o-based approaches 
+            perform the best, and that ReMEmbR outperforms the LLM-based
+            method and remains competitive to the VLM-based approach 
+            on the Short videos. The Medium and Long videos are too
+            long for the VLM to process, and thus is marked with an ✗.
         </p>
+        <br>
         <br>
         <img src="static/images/results.png" width="100%">
       </div>
@@ -254,23 +253,22 @@
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
         <h2 class="title is-3">Deployment</h2>
+        <br>
         <p style="text-align: left;">
-
-				We deploy ReMEmbR on a Nova Carter robot. We run 
-				the memory building phase for
-				25 minutes, and then begin to ask navigation-centric ques-
-				tions The robot successfully handles various instructions,
-				including those with more ambiguous instructions such as
-				going to somewhere with a nice view. However, we found
-				that ReMEmbR often confuses some objects such as soda
-				machines and water fountains, leading to incorrect goals.
-
-				</p>
-				<br>
+            We deploy ReMEmbR on a Nova Carter robot. We run 
+            the memory building phase for
+            25 minutes, and then begin to ask navigation-centric ques-
+            tions The robot successfully handles various instructions,
+            including those with more ambiguous instructions such as
+            going to somewhere with a nice view. However, we found
+            that ReMEmbR often confuses some objects such as soda
+            machines and water fountains, leading to incorrect goals.
+        </p>
+        <br>
+        <br>
         <img src="static/images/deployment_fig.png" width="100%">
       </div>
     </div>
-
 
     <br>
     <br>
