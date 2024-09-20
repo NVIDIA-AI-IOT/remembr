@@ -1,0 +1,3 @@
+FROM dustynv/nano_llm:humble-r36.3.0
+
+RUN mkdir -p /data/models/mlc/dist/models/

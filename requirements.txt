@@ -1,0 +1,11 @@
+langchain-community
+langgraph
+langchain_openai
+langchain_nvidia_ai_endpoints
+pymilvus
+gradio==3.50.2
+langchain_huggingface
+sentence-transformers
+accelerate==0.33.0
+deepspeed==0.9.5
+pydantic==1.10.18
