@@ -1,0 +1,50 @@
+FROM nvcr.io/nvidia/pytorch:23.08-py3
+
+
+# ROS2 REQUIREMENTS
+
+RUN locale && \
+    apt update && \
+    apt install locales && \
+    locale-gen en_US en_US.UTF-8 && \
+    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
+    export LANG=en_US.UTF-8
+
+RUN apt install -y software-properties-common && \
+    add-apt-repository -y universe
+
+
+RUN apt update && \
+    apt install curl -y && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+RUN apt update 
+
+RUN DEBIAN_FRONTEND="noninteractive" apt install -y \
+        ros-humble-ros-base \
+        ros-dev-tools
+
+
+# ASR REQUIREMENTS
+
+# WhisperTRT deps
+RUN pip install openai-whisper
+RUN pip install git+https://github.com/NVIDIA-AI-IOT/torch2trt
+RUN pip install \
+    git+https://github.com/NVIDIA-AI-IOT/whisper_trt \
+    onnxruntime \
+    onnx_graphsurgeon
+
+# Audio deps
+RUN apt update \
+    && apt install -y portaudio19-dev python3-pyaudio \
+    && pip install pyaudio
+
+# Webserver deps
+RUN pip install \
+    python-socketio \
+    eventlet \
+    uvicorn \
+    starlette
