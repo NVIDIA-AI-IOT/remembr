@@ -1,10 +1,10 @@
-<h1 align="center">ReMEmBr: Building and Reasoning Over Long-Horizon Spatio-Temporal Memory for Robots</h1>
+<h1 align="center">ReMEmbR: Building and Reasoning Over Long-Horizon Spatio-Temporal Memory for Robots</h1>
 
 <p align="center">
 
 <a href="#paper">Paper</a> - 
 <a href="#website">Website</a> - 
-<a href="#website">Blog</a>
+<a href="#website">Blog</a> -
 <a href="#setup">Setup</a> 
 
 
@@ -15,7 +15,7 @@
 <a href="#see_also">See also</a>
 </p>
 
-ReMEmBr is a project that uses LLMs + VLMs to build and reason over
+ReMEmbR is a project that uses LLMs + VLMs to build and reason over
 long horizon spatio-temporal memories.  
 
 This allows robots to reason over queries like "Hey Robot, can you take me to get snacks?" and then produce navigation goals.
@@ -59,7 +59,7 @@ This allows robots to reason over queries like "Hey Robot, can you take me to ge
 
 ### Step 1- Create a Memory database
 
-Before you can use the ReMEmBr agent, you need to store data.  The ``Memory`` class provides an standard interface for storing and retrieving data that can be used by the agent.
+Before you can use the ReMEmbR agent, you need to store data.  The ``Memory`` class provides an standard interface for storing and retrieving data that can be used by the agent.
 
 Here we use the pre-defined ``MilvusMemory`` class which implements this interface and uses ``MilvusDB`` under the hood.
 
@@ -93,11 +93,11 @@ memory.insert(memory_item)
 
 In practice, you will generate the MemoryItems from different sources, like a ROS2 bag, dataset, or from a real robot.
 
-### Step 3 - Create the ReMEmBr agent
+### Step 3 - Create the ReMEmbR agent
 
-Now that you've populated your memory database, let's create the ReMEmBr agent to reason over it.
+Now that you've populated your memory database, let's create the ReMEmbR agent to reason over it.
 
-The agent is LLM-agnostic, here we show ReMEmBr using the ``command-r`` LLM type.  We point it to the memory we created above.
+The agent is LLM-agnostic, here we show ReMEmbR using the ``command-r`` LLM type.  We point it to the memory we created above.
 
 ```
 from remembr.agents.remembr_agent import ReMEmbRAgent

@@ -1,6 +1,6 @@
-# ReMEmBr Nova Carter Demo
+# ReMEmbR Nova Carter Demo
 
-This directory contains the code and instructions to run ReMEmBr on a real Nova Carter robot using Isaac ROS.
+This directory contains the code and instructions to run ReMEmbR on a real Nova Carter robot using Isaac ROS.
 
 ## Table of Contents
 
@@ -191,7 +191,7 @@ Now, simply teleoperate the robot to populate the memory database.
 
     ```
 
-#### Step 4.2 - Launch the ReMEmBr Agent node and test
+#### Step 4.2 - Launch the ReMEmbR Agent node and test
 
 1. Launch the demo container
 
@@ -199,7 +199,7 @@ Now, simply teleoperate the robot to populate the memory database.
     ./scripts/run_l4t_docker.sh
     ```
 
-2. Launch the ReMEmBr Agent node
+2. Launch the ReMEmbR Agent node
 
     ```bash
     python python/agent_node.py
@@ -250,7 +250,7 @@ Below are details about the ROS nodes used in the demo.  You can check the pytho
 
 | Name | Description | Default |
 |------|-------------|---------|
-| llm_type | The LLM model to use for the ReMEmBr agent. | "command-r" |
+| llm_type | The LLM model to use for the ReMEmbR agent. | "command-r" |
 | db_collection | The MilvusDB collection to use for the memory | "test_collection" |
 | db_ip | The MilvusDB IP address. | "127.0.0.1" |
 | query_topic | The topic to listen to queries from. | "/speech" |
