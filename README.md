@@ -13,12 +13,21 @@
 <a href="#evaluation">Dataset and Evaluation</a> -
 <a href="#notice">Notice</a> -
 <a href="#see_also">See also</a>
+
+<video width="320"  controls>
+  <source src="https://github.com/NVIDIA-AI-IOT/remembr/raw/refs/heads/website/static/video/demo.mp4" type="video/mp4">
+</video>
+
 </p>
+
+
 
 ReMEmbR is a project that uses LLMs + VLMs to build and reason over
 long horizon spatio-temporal memories.  
 
-This allows robots to reason over queries like "Hey Robot, can you take me to get snacks?" and then produce navigation goals.
+This allows robots to reason over many kinds of questions such as 
+"Hey Robot, can you take take me to get snacks?" to temporal multi-step reasoning 
+questions like "How long were you in the building for?"
 
 <a id="setup"></a>
 ## Setup
