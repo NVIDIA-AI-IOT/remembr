@@ -161,14 +161,6 @@ Please check the [nova_carter_demo](./examples/nova_carter_demo) folder for deta
 
 If you are interested in the NaVQA dataset and evaluating on it, please check the [evaluation](./eval.md) readme for more information.
 
-<a id="ongoing"></a>
-## Ongoing
-There are a few elements in the paper that have not been integrated into this code release and will be added in the future
-
-- The NaVQA dataset has not yet been released
-- Integrating OpenAI-based APIs such as GPT4o
-- Adding the ability to choose the number of querying iterations
-
 <a id="notice"></a>
 ## Usage Notice!
 
