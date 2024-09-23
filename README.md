@@ -1,25 +1,8 @@
 <h1 align="center">ReMEmbR: Building and Reasoning Over Long-Horizon Spatio-Temporal Memory for Robots</h1>
 
-<p align="center">
-
-<a href="#paper">Paper</a> - 
-<a href="#website">Website</a> - 
-<a href="#website">Blog</a> -
-<a href="#setup">Setup</a> 
-
-
-<a href="#usage">Usage</a> - 
-<a href="#examples">Examples</a> -
-<a href="#evaluation">Dataset and Evaluation</a> -
-<a href="#notice">Notice</a> -
-<a href="#see_also">See also</a>
-
-<video width="320"  controls>
-  <source src="https://github.com/NVIDIA-AI-IOT/remembr/raw/refs/heads/website/static/video/demo.mp4" type="video/mp4">
-</video>
+<p align="center"><a href="https://arxiv.org/abs/2409.13682">Paper</a> - <a href="https://nvidia-ai-iot.github.io/remembr">Website</a><br><a href="#setup">Setup</a> -<a href="#usage">Usage</a> - <a href="#examples">Examples</a> - <a href="#evaluation">Evaluation</a> - <a href="#notice">Notice</a> - <a href="#see_also">See also</a> 
 
 </p>
-
 
 
 ReMEmbR is a project that uses LLMs + VLMs to build and reason over
