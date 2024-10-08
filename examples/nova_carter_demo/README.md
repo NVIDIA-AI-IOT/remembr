@@ -29,6 +29,11 @@ This directory contains the code and instructions to run ReMEmbR on a real Nova 
     export ISAAC_ROS_WS=$(pwd)/isaac_ros_ws
     ```
 
+    ```bash
+    cd ${ISAAC_ROS_WS}/src && \
+    git clone -b release-3.1 https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common.git isaac_ros_common
+    ```
+
 2. Setup workspace (taken from [here](https://nvidia-isaac-ros.github.io/robots/nova_carter/getting_started.html#nova-carter-dev-setup)):
 
 
