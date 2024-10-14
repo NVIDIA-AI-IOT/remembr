@@ -94,6 +94,7 @@ This directory contains the code and instructions to run ReMEmbR on a real Nova 
 
 ### Step 2 - Build an occupancy grid map
 
+    
 1. If not already inside the Isaac ROS dev container, launch the Isaac ROS Dev container (built above)
 
     ```bash
@@ -103,6 +104,16 @@ This directory contains the code and instructions to run ReMEmbR on a real Nova 
     source /opt/ros/humble/setup.bash
     source install/setup.bash
     ```
+    
+1. Launch the Isaac ROS lidar mapping (ensure you shut down the previous teleop example)
+    ```bash
+    export ROS_DOMAIN_ID=1
+
+    ros2 launch nova_carter_bringup lidar_mapping.launch.py \
+        disable_nvblox:=True \
+        enable_nvblox_costmap:=False
+    ```
+    
 3. Open FoxGlove to visualize the map building process. (Details in Isaac Ros Documenation).
 
 2. Teleoperate the robot to build a map
