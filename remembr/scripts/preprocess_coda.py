@@ -22,7 +22,7 @@ from tqdm import tqdm
 
 # For imports
 import sys
-CODA_DEVKIT_DIRECTORY = os.path.append(os.environ['CODA_ROOT_DIR'], '..')
+CODA_DEVKIT_DIRECTORY = os.path.join(os.environ['CODA_ROOT_DIR'], '..')
 sys.path.append(CODA_DEVKIT_DIRECTORY)
 
 from helpers.visualization import (clear_marker_array, create_3d_bbox_marker, pub_pose,
@@ -244,11 +244,11 @@ def vis_annos_rviz(args):
             # cam3_ts = rospy.Time.from_sec(stereo_img_ts[closest_stereo_img_idx])
 
 
-        if pose_idx % 100 == 0:
-            cv2.imshow('cam0', cam0_image)
-            # cv2.imshow('cam1', cam1_image)
-            # cv2.imshow('stereo', stereo_img_np)
-            cv2.waitKey(1)
+        # if pose_idx % 100 == 0:
+        #     cv2.imshow('cam0', cam0_image)
+        #     # cv2.imshow('cam1', cam1_image)
+        #     # cv2.imshow('stereo', stereo_img_np)
+        #     cv2.waitKey(1)
 
         # we want to save:
         # cam0, stereo, bbox_3d_json, pose, and lidar_ts

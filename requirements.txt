@@ -5,7 +5,7 @@ langchain_nvidia_ai_endpoints
 pymilvus
 gradio==3.50.2
 langchain_huggingface
-sentence-transformers
+sentence-transformers==3.1.0
 accelerate==0.33.0
 deepspeed==0.9.5
 pydantic==1.10.18

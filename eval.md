@@ -7,9 +7,10 @@ We only need 7 of them which are `0, 3, 4, 6, 16, 21, 22`. These numbers will be
 
 > Because of the number of videos, be sure to have a large amount of storage. The processed dataset is ~335GB, but since the pre-processing phase also downloads LiDAR and other outputs, we would recommend having ~500GB extra storage.
 
-Download the CODa devkit to some directory not inside ReMEmbR:
+Download the CODa devkit to some directory not inside ReMEmbR. Ideally place this in a larger HDD that has enough storage for all the data.
 ```
 git clone https://github.com/ut-amrl/coda-devkit.git
+cd coda-devkit && mkdir data
 ```
 
 Then let us set a few environment variables. Fill them with the appropriate paths. The `REMEMBR_PATH` is the folder where the `scripts` folder is accessible.
@@ -17,12 +18,18 @@ We would recommend adding these to your `~/.bashrc`
 ```
 export CODA_ROOT_DIR=/path/to/coda-devkit/data
 export REMEMBR_PATH=/path/to/remembr
-cd $CODA_ROOT_DIR/..
 ```
 
-Then run the following command which will preprocess the data in the appropriate format:
+Then we need to ensure we can run CODa's scripts. We have to first install their `coda` environment:
+```
+# while in the coda-devkit directory
+conda env create -f environment.yml
+```
+
+Then run the following command which will preprocess the data in the appropriate format from the `remembr` directory:
 
 ```
+conda activate coda
 cd remembr
 bash scripts/bash_scripts/preprocess_coda_all.sh
 ```
@@ -33,8 +40,8 @@ Ensure the location of your preprocessed coda data is located in `/path/to/remem
 
 Given the dataset, run the following command for each. We describe the meaning of each below:
 
-
 ```
+conda activate remembr
 python scripts/preprocess_captions.py \
     --seq_id 0 \
     --seconds_per_caption 3 \
@@ -55,16 +62,9 @@ The captions for each frame should be put into a JSON file located in `data/capt
 
 We provide an example to preprocess all captions as above in `scripts/bash_scripts/preprocess_captions_all.sh`
 
-## Download the dataset and preprocess it
+### Ensure `data/navqa/data.csv` exists
 
-### 1. Download `human_unfilled` into the `data` folder.
-
-```
-TODO. ADD DATASET DOWNLOAD INSTRUCTIONS
-```
-
-This contains templates of the questions as json files for each sequence. Then, there is a `data.csv` that includes human annotated questions. 
-
+This folder contains the questions and answers that must be converted into the proper format.
 
 ### 2. Form the questions in the proper format
 Run the following script, providing it a base captioner file that you ran previously. 
@@ -73,7 +73,7 @@ Run the following script, providing it a base captioner file that you ran previo
 python scripts/question_scripts/form_question_jsons.py --caption_file captions_{{captioner_name}}_{{seconds_per_caption}}_secs
 ```
 
-This is meant to also aggregate the "optimal" context required to answer the question based on the captioner and seconds per caption, so you must set `captioner_name` and `seconds_per_caption`. We recommend using a 3 seconds per caption value. Here is an example:
+This is meant to also aggregate the "optimal" context required to answer the question based on the captioner and seconds per caption, so you must set `captioner_name` and `seconds_per_caption`. We recommend using a 3 seconds per caption value. Here is an example coninuing from above:
 
 ```
 python scripts/question_scripts/form_question_jsons.py --caption_file captions_VILA1.5-13b_3_secs

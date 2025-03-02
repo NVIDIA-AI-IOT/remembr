@@ -39,10 +39,14 @@ questions like "How long were you in the building for?"
 
 4. Install MilvusDB
 
+```
+ curl -sfL https://raw.githubusercontent.com/milvus-io/milvus/master/scripts/standalone_embed.sh -o launch_milvus_container.sh
+ ```
+
     > `docker` must be installed on the system to easily use Milvus by simply running the command below. This script will automatically launch MilvusDB on a docker container. Otherwise, the user must install MilvusDB from scratch themselves
 
     ```
-    bash launch_milvus_container.sh
+    bash launch_milvus_container.sh start
     ```
 
 <a id="usage"></a>
