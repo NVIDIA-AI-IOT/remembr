@@ -62,8 +62,9 @@ The captions for each frame should be put into a JSON file located in `data/capt
 
 We provide an example to preprocess all captions as above in `scripts/bash_scripts/preprocess_captions_all.sh`
 
-### Ensure `data/navqa/data.csv` exists
+## Check the dataset and preprocess it
 
+### 1. Ensure `data/navqa/data.csv` exists
 This folder contains the questions and answers that must be converted into the proper format.
 
 ### 2. Form the questions in the proper format

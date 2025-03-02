@@ -127,8 +127,6 @@ def vis_annos_rviz(args):
 
 
         # Get the closest frame
-        # frame = last_frame + np.searchsorted(lidar_ts_np[last_frame:],
-        #                                      pose_ts, side='left')
         frame = np.searchsorted(lidar_ts_np, pose_ts, side='left')
 
         if frame == last_frame:
@@ -142,18 +140,10 @@ def vis_annos_rviz(args):
 
         # Broadcast TF (odom -> os1)
 
-
-        # tf_msg.transform.translation.x = base_pose[0, 3]
-        # tf_msg.transform.translation.y = base_pose[1, 3]
-        # tf_msg.transform.translation.z = base_pose[2, 3]
         try:
             rotation = tf_trans.quaternion_from_matrix(base_pose)
         except:
             continue # skip if it doesn't work
-        # tf_msg.transform.rotation.x = rotation[0]
-        # tf_msg.transform.rotation.y = rotation[1]
-        # tf_msg.transform.rotation.z = rotation[2]
-        # tf_msg.transform.rotation.w = rotation[3]
         
         # Get the path to the data
         pc_file   = set_filename_dir(indir, TRED_COMP_DIR, "os1", sequence, frame, include_name=True)
@@ -185,16 +175,6 @@ def vis_annos_rviz(args):
                     ]
                     bbox_3d_color = (bbox_3d_color_scaled_rgb)
 
-                # bbox_marker = create_3d_bbox_marker(
-                #     bbox_3d['cX'], bbox_3d['cY'], bbox_3d['cZ'],
-                #     bbox_3d['l'],  bbox_3d['w'],  bbox_3d['h'],
-                #     bbox_3d['r'],  bbox_3d['p'],  bbox_3d['y'],
-                #     lidar_frame, lidar_ts, bbox_3d['instanceId'],
-                #     int(bbox_3d['instanceId'].split(':')[-1]),
-                #     *bbox_3d_color,
-                # )
-                # bbox_3d_markers.append(bbox_marker)
-
             # Log 3d Bbox for external viewing
             if log_dir!="":
                 bbox_outpath = f'{log_dir}/{last_frame}bbox.bin'
@@ -209,25 +189,9 @@ def vis_annos_rviz(args):
             # Camera 1
             cam1_image = cv2.imread(cam1_file, cv2.IMREAD_COLOR)
 
-            # if os.path.exists(sem_file):
-            #     cam0_image = project_3dpoint_image(cam0_image, lidar_np, os1_to_cam0_ext_file, cam0_intrinsics_file, sem_file
-            #     )
-
-            #     cam1_image = project_3dpoint_image(cam1_image, lidar_np, os1_to_cam1_ext_file, cam1_intrinsics_file, sem_file
-            #     )
-
             # Project 3D Bounding Box to 2D
             if os.path.exists(bbox_file):
                 bbox_3d_json = json.load(open(bbox_file, 'r'))
-                # cam0_image = project_3dbbox_image(
-                #     bbox_3d_json, os1_to_cam0_ext_file, cam0_intrinsics_file,
-                #     cam0_image
-                # )
-
-                # cam1_image = project_3dbbox_image(
-                #     bbox_3d_json, os1_to_cam1_ext_file, cam1_intrinsics_file,
-                #     cam1_image
-                # )
             else:
                 bbox_3d_json = {}
 
@@ -239,24 +203,12 @@ def vis_annos_rviz(args):
             closest_stereo_path = join(stereo_img_dir, closest_stereo_file)
             stereo_img_np = cv2.imread(closest_stereo_path, cv2.IMREAD_GRAYSCALE)
             max_val = np.max(stereo_img_np)
-            # stereo_img_np = stereo_img_np * (255.0 / max_val)
-            # stereo_img_np = stereo_img_np.astype(np.uint16)
-            # cam3_ts = rospy.Time.from_sec(stereo_img_ts[closest_stereo_img_idx])
-
-
-        # if pose_idx % 100 == 0:
-        #     cv2.imshow('cam0', cam0_image)
-        #     # cv2.imshow('cam1', cam1_image)
-        #     # cv2.imshow('stereo', stereo_img_np)
-        #     cv2.waitKey(1)
 
         # we want to save:
         # cam0, stereo, bbox_3d_json, pose, and lidar_ts
 
         out_dict = {}
         out_dict['cam0'] = cam0_image
-        # if 'stereo_img_np' in locals():
-        #     out_dict['stereo'] = stereo_img_np
         out_dict['bbox_3d'] = bbox_3d_json
         out_dict['position'] = np.array([x,y,z])
         out_dict['rotation'] = np.array(rotation)
