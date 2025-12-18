@@ -10,6 +10,7 @@ dependencies = [
     "langchain-nvidia-ai-endpoints>=0.2.0",
     "langchain-openai>=0.1.14",
     "langgraph>=0.1.5",
+    "pillow>=10.4.0",
     "pymilvus>=2.6.5",
     "transformers",
 ]

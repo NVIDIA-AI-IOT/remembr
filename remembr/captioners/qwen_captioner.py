@@ -1,5 +1,5 @@
 from PIL import Image
-from remembr.captioners.captioner import Captioner
+from captioners.captioner import Captioner
 from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor
 
 
