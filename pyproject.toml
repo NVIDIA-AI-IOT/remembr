@@ -12,5 +12,7 @@ dependencies = [
     "langgraph>=0.1.5",
     "pillow>=10.4.0",
     "pymilvus>=2.6.5",
+    "scipy>=1.15.3",
+    "torch>=2.9.1",
     "transformers",
 ]
