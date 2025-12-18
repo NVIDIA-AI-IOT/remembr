@@ -103,6 +103,7 @@ def run_video_in_segs(args):
 
 
         text_embedding = embedder.embed_query(out_text)
+        print(len(text_embedding))
 
         
         entity = {

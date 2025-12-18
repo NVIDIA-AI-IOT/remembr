@@ -11,8 +11,9 @@ class Qwen25VLCaptioner(Captioner):
         print(f"Loading Qwen2.5-VL from {args.model_path}...")
         self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             args.model_path,
-            device_map="cuda",
-            attn_implementation="sdpa",
+            torch_dtype=torch.bfloat16,
+            attn_implementation="flash_attention_2",
+            device_map="auto",
         )
 
         self.processor = AutoProcessor.from_pretrained(args.model_path, use_fast=True)
