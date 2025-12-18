@@ -16,5 +16,6 @@ dependencies = [
     "scipy>=1.15.3",
     "sentence-transformers>=5.2.0",
     "torch>=2.9.1",
+    "torchvision>=0.24.1",
     "transformers",
 ]
