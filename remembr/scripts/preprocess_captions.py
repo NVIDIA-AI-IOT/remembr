@@ -56,6 +56,7 @@ def run_video_in_segs(args):
     # captions_location = f'./data/{SEQUENCE_ID}/captions'
     captions_location = args.out_path
     if os.path.exists(captions_location):
+        print(f"exit because data folder already exists, path: {captions_location}")
         exit()
         # shutil.rmtree(captions_location, ignore_errors=True)
     os.makedirs(captions_location, exist_ok=True)
@@ -153,12 +154,12 @@ if __name__ == "__main__":
     # default_query = "<video>\n What is the color of the floor?"
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-path", type=str, default="Qwen/Qwen2.5-VL-7B-Instruct")
+    parser.add_argument("--model-path", type=str, default="Qwen/Qwen2.5-VL-3B-Instruct")
     parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--seq_id", type=int, default=0)
     parser.add_argument("--data_path", type=str, default="./coda_data")
     parser.add_argument("--out_path", type=str, default="./data/captions")
-    parser.add_argument("--captioner_name", type=str, default="qwen-2.5-vl-7b-instruct")
+    parser.add_argument("--captioner_name", type=str, default="qwen-2.5-vl-3b-instruct")
 
     parser.add_argument("--seconds_per_caption", type=int, default=3)
 
