@@ -6,7 +6,6 @@ import sys
 
 # load this directory
 sys.path.append(sys.path[0] + '/..')
-from captioners.vila_captioner import VILACaptioner
 from captioners.qwen_captioner import Qwen25VLCaptioner
 import pickle as pkl
 from PIL import Image as PILImage
