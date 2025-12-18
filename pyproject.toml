@@ -3,14 +3,17 @@ name = "remembr"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.11"
 dependencies = [
     "accelerate>=1.12.0",
+    "flash-attn",
     "langchain-community>=0.2.5",
     "langchain-huggingface>=0.0.3",
     "langchain-nvidia-ai-endpoints>=0.2.0",
     "langchain-openai>=0.1.14",
     "langgraph>=0.1.5",
+    "ninja>=1.13.0",
+    "packaging>=25.0",
     "pillow>=10.4.0",
     "pymilvus>=2.6.5",
     "scipy>=1.15.3",
@@ -19,3 +22,6 @@ dependencies = [
     "torchvision>=0.24.1",
     "transformers",
 ]
+
+[tool.uv.sources]
+flash-attn = { url = "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.5.4/flash_attn-2.8.3%2Bcu126torch2.9-cp310-cp310-linux_x86_64.whl" }
