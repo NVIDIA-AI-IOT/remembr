@@ -14,7 +14,7 @@ class Qwen25VLCaptioner(Captioner):
             attn_implementation="sdpa",
         )
 
-        self.processor = AutoProcessor.from_pretrained(args.model_path)
+        self.processor = AutoProcessor.from_pretrained(args.model_path, use_fast=True)
 
         self.default_query = "You are a wandering around a university campus.\
         Please describe in detail what you see in the few seconds of the video. \

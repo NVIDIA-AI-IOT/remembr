@@ -93,6 +93,7 @@ def run_video_in_segs(args):
         # let's sample the images down to args.num_video_frames
         images = images[::30//args.num_video_frames]
 
+        print(f"captioning {len(images)}")
         out_text = vila_model.caption(images)
 
         print(out_text)
