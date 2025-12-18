@@ -1,0 +1,15 @@
+[project]
+name = "remembr"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain-community>=0.2.5",
+    "langchain-huggingface>=0.0.3",
+    "langchain-nvidia-ai-endpoints>=0.2.0",
+    "langchain-openai>=0.1.14",
+    "langgraph>=0.1.5",
+    "pymilvus>=2.6.5",
+    "transformers",
+]

@@ -1,24 +1,19 @@
 import argparse
-import re
-from io import BytesIO
-import os, os.path as osp
+import os
 
-import requests
-from PIL import Image
 import numpy as np
 import sys
 
 # load this directory
 sys.path.append(sys.path[0] + '/..')
 from captioners.vila_captioner import VILACaptioner
-from utils.util import get_frames
+from captioners.qwen_captioner import Qwen25VLCaptioner
 import pickle as pkl
 from PIL import Image as PILImage
 
 from langchain_huggingface import HuggingFaceEmbeddings
 import glob
 from scipy.spatial.transform import Rotation
-import shutil
 import json
 
 import tqdm
@@ -56,7 +51,7 @@ def run_video_in_segs(args):
             current_segment.append(file)
 
     embedder = HuggingFaceEmbeddings(model_name='mixedbread-ai/mxbai-embed-large-v1')
-    vila_model = VILACaptioner(args)
+    vila_model = Qwen25VLCaptioner(args)
 
     # if exists, then exit
     # captions_location = f'./data/{SEQUENCE_ID}/captions'
@@ -158,21 +153,17 @@ if __name__ == "__main__":
     # default_query = "<video>\n What is the color of the floor?"
 
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--model-path", type=str, default="Efficient-Large-Model/VILA1.5-3b")
-    # parser.add_argument("--model-path", type=str, default="Efficient-Large-Model/VILA1.5-13b")
-    parser.add_argument("--model-path", type=str, default="Efficient-Large-Model/Llama-3-VILA1.5-8B")
+    parser.add_argument("--model-path", type=str, default="Qwen/Qwen2.5-VL-7B-Instruct")
     parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--seq_id", type=int, default=0)
     parser.add_argument("--data_path", type=str, default="./coda_data")
     parser.add_argument("--out_path", type=str, default="./data/captions")
-    parser.add_argument("--captioner_name", type=str, default="Llama-3-VILA1.5-8b")
+    parser.add_argument("--captioner_name", type=str, default="qwen-2.5-vl-7b-instruct")
 
     parser.add_argument("--seconds_per_caption", type=int, default=3)
 
     parser.add_argument("--video-file", type=str, default=None)
     parser.add_argument("--num-video-frames", type=int, default=6)
-    parser.add_argument("--query", type=str, default=default_query)
-    parser.add_argument("--conv-mode", type=str, default="llama_3")
     parser.add_argument("--sep", type=str, default=",")
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--top_p", type=float, default=None)
@@ -180,17 +171,6 @@ if __name__ == "__main__":
     parser.add_argument("--max_new_tokens", type=int, default=512)
     args = parser.parse_args()
 
-
-    # add some rules here
-    if 'Efficient-Large-Model/VILA1.5-40b' in args.model_path:
-        args.conv_mode = 'hermes-2'
-    elif 'Efficient-Large-Model/VILA1.5' in args.model_path:
-        args.conv_mode = 'vicuna_v1'
-    elif 'Llama' in args.model_path:
-        args.conv_mode = 'llama_3'
-    else:
-        # trust the default conv_mode
-        args.conv_mode = args.conv_mode
 
     run_video_in_segs(args)
 
