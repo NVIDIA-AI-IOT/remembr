@@ -1,3 +1,4 @@
+import torch
 from PIL import Image
 from captioners.captioner import Captioner
 from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor
@@ -10,7 +11,7 @@ class Qwen25VLCaptioner(Captioner):
         print(f"Loading Qwen2.5-VL from {args.model_path}...")
         self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             args.model_path,
-            device_map="auto",
+            device_map="cuda",
             attn_implementation="sdpa",
         )
 
@@ -49,10 +50,11 @@ class Qwen25VLCaptioner(Captioner):
 
         inputs = inputs.to(self.model.device)
 
-        generated_ids = self.model.generate(
-            **inputs,
-            max_new_tokens=self.args.max_new_tokens,
-        )
+        with torch.inference_mode():
+            generated_ids = self.model.generate(
+                **inputs,
+                max_new_tokens=self.args.max_new_tokens,
+            )
 
         generated_ids_trimmed = [
             out_ids[len(in_ids) :]
