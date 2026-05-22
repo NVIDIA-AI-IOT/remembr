@@ -133,7 +133,7 @@ print(response.position)
 
 
 > Note RCL import error
-If you recieve an error such as `version 'GLIBCXX_3.4.30' not found`, you may need to update your gcc version
+If you receive an error such as `version 'GLIBCXX_3.4.30' not found`, you may need to update your gcc version
     ```
     conda install -c conda-forge gcc=12.1.0
     ```
