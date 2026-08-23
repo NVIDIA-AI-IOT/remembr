@@ -68,6 +68,11 @@ memory = MilvusMemory("test_collection", db_ip='127.0.0.1')
 memory.reset()
 ```
 
+> If you cannot run the MilvusDB docker container, you can instead pass a local
+> file path ending in `.db` (e.g. `MilvusMemory("test_collection", db_ip='milvus_local.db')`)
+> to use [Milvus Lite](https://milvus.io/docs/milvus_lite.md), an embedded,
+> file-backed Milvus that requires no server (`pip install milvus-lite`).
+
 ### Step 2 - Add a MemoryItem
 
 The data used by ReMEmbR includes captions (as generated from a VLM) along with associated timestamps and pose information (from a SLAM algorithm or other source).
@@ -88,6 +93,51 @@ memory.insert(memory_item)
 ```
 
 In practice, you will generate the MemoryItems from different sources, like a ROS2 bag, dataset, or from a real robot.
+
+### Step 2.5 (Optional) - Lifelong memory management
+
+When a robot runs for a long time, its memory fills up with stale, near-duplicate
+observations (e.g. the same "I see a desk" caption recorded every few seconds while
+the robot is parked). Memory management policies keep the database compact by
+removing redundant entries.
+
+The built-in `StaleDuplicatePolicy` drops entries that are (1) sufficiently old,
+(2) recorded within a small radius of a newer entry, and (3) have a near-duplicate
+caption (by embedding cosine similarity). The newest observation of each
+near-duplicate cluster always survives, and recent or unique memories are never touched.
+
+You can apply a policy on demand:
+
+```python
+from remembr.memory.memory_policy import StaleDuplicatePolicy
+
+policy = StaleDuplicatePolicy(
+    max_age=3600,             # entries younger than this (seconds) are never dropped
+    position_radius=1.0,      # meters; how close two observations must be
+    embedding_similarity_threshold=0.9,
+)
+
+result = memory.apply_policy(policy)
+print(f"Dropped {result.num_dropped} of {result.num_scanned} memories")
+```
+
+Or let the memory prune itself automatically every `prune_every` inserts:
+
+```python
+memory = MilvusMemory("test_collection", db_ip='127.0.0.1',
+                      policy=policy, prune_every=100)
+```
+
+By default, staleness is measured relative to the newest entry in memory, so
+replayed logs behave the same as a live robot. Pass `memory.apply_policy(policy,
+now=time.time())` to age entries against the wall clock instead. Custom policies
+can be defined by subclassing `MemoryPolicy` and implementing `select_for_removal`.
+
+Note that a pruning pass scans the collection's metadata (captions, times,
+positions) and runs synchronously on the insert that triggers it; embeddings are
+only fetched for the entries that actually need a similarity check. Choose
+`prune_every` to match your insert rate, or call `apply_policy()` yourself from a
+maintenance loop if you prefer full control.
 
 ### Step 3 - Create the ReMEmbR agent
 
@@ -147,6 +197,18 @@ Please check the [nova_carter_demo](./examples/nova_carter_demo) folder for deta
 ## Dataset and Evaluation
 
 If you are interested in the NaVQA dataset and evaluating on it, please check the [evaluation](./eval.md) readme for more information.
+
+## Tests
+
+Unit tests for the memory management policies require only `pytest` and `numpy`:
+
+```
+python -m pytest tests/
+```
+
+The MilvusMemory integration tests additionally run against a MilvusDB server on
+`127.0.0.1:19530` when one is up, fall back to Milvus Lite (`pip install milvus-lite`)
+when it is installed, and are skipped otherwise.
 
 <a id="notice"></a>
 ## Usage Notice!

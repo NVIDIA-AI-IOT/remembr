@@ -3,14 +3,11 @@ from dataclasses import dataclass, asdict
 import datetime, time
 from time import strftime, localtime
 from typing import Any, Iterable, List, Optional, Tuple, Union
-from langchain_core.documents import Document
 import numpy as np
 
 
 from remembr.memory.memory import Memory, MemoryItem
-from remembr.captioners.captioner import Captioner
-
-from langchain_community.vectorstores import Milvus
+from remembr.memory.memory_policy import MemoryPolicy, MemoryRecord, PolicyResult
 
 # Due to Milvus DB's vector quantization, must normalize all times
 FIXED_SUBTRACT=1721761000 # this is just a large value that brings us closed to 1970
@@ -26,6 +23,15 @@ class TextMemory(Memory):
 
     def reset(self):
         self.memory = []
+
+    def apply_policy(self, policy: MemoryPolicy, now: float = None) -> PolicyResult:
+        # TextMemory stores no ids or embeddings, so records are identified by
+        # their list index and the policy falls back to text similarity.
+        records = [MemoryRecord(id=str(i), item=item) for i, item in enumerate(self.memory)]
+        result = policy.select_for_removal(records, now=now)
+        drop_indices = set(result.drop_ids)
+        self.memory = [item for i, item in enumerate(self.memory) if str(i) not in drop_indices]
+        return result
 
     def get_working_memory(self) -> list[MemoryItem]:
         if type(self.memory[0]) == str:
