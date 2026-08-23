@@ -5,6 +5,7 @@ from std_msgs.msg import String
 from scipy.spatial.transform import Rotation as R
 from remembr.memory.memory import MemoryItem
 from remembr.memory.milvus_memory import MilvusMemory
+from remembr.memory.memory_policy import StaleDuplicatePolicy
 
 from common_utils import format_pose_msg
 
@@ -21,6 +22,14 @@ class MemoryBuilderNode(Node):
         self.declare_parameter("pose_topic", "/amcl_pose")
         self.declare_parameter("caption_topic", "/caption")
 
+        # Lifelong memory management: periodically drop stale entries whose
+        # caption duplicates a nearby, newer observation.
+        self.declare_parameter("enable_memory_pruning", False)
+        self.declare_parameter("pruning_interval", 100)  # inserts between pruning passes
+        self.declare_parameter("pruning_max_age", 3600.0)  # seconds
+        self.declare_parameter("pruning_position_radius", 1.0)  # meters
+        self.declare_parameter("pruning_similarity_threshold", 0.9)  # caption embedding cosine similarity
+
         self.pose_subscriber = self.create_subscription(
             PoseWithCovarianceStamped,
             self.get_parameter("pose_topic").value,
@@ -31,12 +40,22 @@ class MemoryBuilderNode(Node):
         self.caption_subscriber = self.create_subscription(
             String,
             self.get_parameter("caption_topic").value,
-            self.query_callback,
+            self.caption_callback,
             10
         )
+        policy = None
+        if self.get_parameter("enable_memory_pruning").value:
+            policy = StaleDuplicatePolicy(
+                max_age=self.get_parameter("pruning_max_age").value,
+                position_radius=self.get_parameter("pruning_position_radius").value,
+                embedding_similarity_threshold=self.get_parameter("pruning_similarity_threshold").value,
+            )
+
         self.memory = MilvusMemory(
             self.get_parameter("db_collection").value,
-            self.get_parameter("db_ip").value
+            self.get_parameter("db_ip").value,
+            policy=policy,
+            prune_every=self.get_parameter("pruning_interval").value
         )
 
         self.pose_msg = None

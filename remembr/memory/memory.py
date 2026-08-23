@@ -26,6 +26,15 @@ class Memory:
     def insert(self, item: MemoryItem):
         raise NotImplementedError
 
+    def remove(self, ids: list):
+        raise NotImplementedError
+
+    def apply_policy(self, policy, now: float = None):
+        # policy is a remembr.memory.memory_policy.MemoryPolicy; implementations
+        # should run it over their stored records, delete what it selects, and
+        # return the resulting PolicyResult.
+        raise NotImplementedError
+
     def get_working_memory(self) -> list[MemoryItem]:
         raise NotImplementedError
 

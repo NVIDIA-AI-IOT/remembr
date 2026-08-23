@@ -1,12 +1,14 @@
 from dataclasses import dataclass, asdict
 
 import datetime, time
+import uuid
 from time import strftime, localtime
 from typing import Any, List, Optional, Tuple
 from langchain_core.documents import Document
 import numpy as np
 
 from remembr.memory.memory import Memory, MemoryItem
+from remembr.memory.memory_policy import MemoryPolicy, MemoryRecord, PolicyResult
 
 from langchain_community.vectorstores import Milvus
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -16,6 +18,11 @@ from pymilvus import connections, FieldSchema, CollectionSchema, DataType, Colle
 
 FIXED_SUBTRACT=1721761000 # this is just a large value that brings us close to 1970
 
+
+def is_local_milvus(address) -> bool:
+    # A db_ip like "milvus_demo.db" refers to a Milvus Lite local file
+    # rather than a server address.
+    return str(address).endswith('.db')
 
 
 class MilvusWrapper:
@@ -29,7 +36,11 @@ class MilvusWrapper:
         utility.drop_collection(self.collection_name)
 
     def connect_to_milvus_collection(self, collection_name, dim, address='127.0.0.1', port=19530, drop_collection=False):
-        connections.connect(host=address, port=port)
+        if is_local_milvus(address):
+            # Milvus Lite: an embedded, file-backed Milvus (no docker needed)
+            connections.connect(uri=address)
+        else:
+            connections.connect(host=address, port=port)
         
         if drop_collection:
             utility.drop_collection(collection_name)
@@ -105,12 +116,19 @@ class MilvusWrapper:
 class MilvusMemory(Memory):
 
 
-    def __init__(self, db_collection_name: str, db_ip='127.0.0.1', db_port=19530, time_offset=FIXED_SUBTRACT):
+    def __init__(self, db_collection_name: str, db_ip='127.0.0.1', db_port=19530, time_offset=FIXED_SUBTRACT,
+                 policy: MemoryPolicy = None, prune_every: int = 100):
 
         self.db_collection_name = db_collection_name
         self.db_ip = db_ip
         self.db_port = db_port
         self.time_offset = time_offset
+
+        # Optional lifelong memory management: when a policy is set, it is
+        # applied automatically after every `prune_every` inserts.
+        self.policy = policy
+        self.prune_every = prune_every
+        self._inserts_since_prune = 0
 
         self.embedder = HuggingFaceEmbeddings(model_name='mixedbread-ai/mxbai-embed-large-v1')
 
@@ -122,7 +140,9 @@ class MilvusMemory(Memory):
     def insert(self, item: MemoryItem, text_embedding=None):
 
         memory_dict = asdict(item)
-        memory_dict['id'] = str(time.time())
+        # time alone is not collision-free at high insert rates, so add a uuid
+        # suffix to keep primary keys unique and deletions precise
+        memory_dict['id'] = f"{time.time()}-{uuid.uuid4().hex[:8]}"
 
         if text_embedding is None:
             text_embedding = self.embedder.embed_query(memory_dict['caption'])
@@ -132,6 +152,105 @@ class MilvusMemory(Memory):
         memory_dict['text_embedding'] = text_embedding
 
         self.milv_wrapper.insert([memory_dict])
+
+        if self.policy is not None:
+            self._inserts_since_prune += 1
+            if self._inserts_since_prune >= self.prune_every:
+                self._inserts_since_prune = 0
+                # The item above is already stored, so a failed pruning pass
+                # (e.g. a transient DB timeout) must not fail the insert;
+                # the next pass will pick up anything this one missed.
+                try:
+                    self.apply_policy(self.policy)
+                except Exception as e:
+                    print(f"Warning: memory pruning pass failed, will retry after {self.prune_every} more inserts: {e}")
+
+    def get_all(self, include_embedding=True) -> List[MemoryRecord]:
+        """Return every stored entry as a MemoryRecord (with absolute times)."""
+
+        collection = self.milv_wrapper.collection
+        collection.load()
+
+        fields = ['id', 'position', 'theta', 'time', 'caption']
+        if include_embedding:
+            fields.append('text_embedding')
+
+        # Strong consistency so a pruning pass right after inserts (e.g. the
+        # auto-prune inside insert()) sees every row that was just written.
+        rows = []
+        if hasattr(collection, 'query_iterator'):
+            iterator = collection.query_iterator(batch_size=1000, expr='id != ""',
+                                                 output_fields=fields, consistency_level='Strong')
+            while True:
+                batch = iterator.next()
+                if not batch:
+                    break
+                rows.extend(batch)
+            iterator.close()
+        else:
+            # Fallback for older pymilvus versions without query_iterator.
+            # 16384 is the largest window a single query allows.
+            rows = collection.query(expr='id != ""', output_fields=fields, limit=16384,
+                                    consistency_level='Strong')
+
+        records = []
+        for row in rows:
+            item = MemoryItem(
+                caption=row['caption'],
+                time=float(row['time'][0]) + self.time_offset,
+                position=list(row['position']),
+                theta=row['theta'],
+            )
+            embedding = list(row['text_embedding']) if include_embedding else None
+            records.append(MemoryRecord(id=row['id'], item=item, embedding=embedding))
+        return records
+
+    def _fetch_embedding(self, entry_id: str):
+        rows = self.milv_wrapper.collection.query(
+            expr=f'id == "{entry_id}"', output_fields=['text_embedding'],
+            limit=1, consistency_level='Strong')
+        if not rows:
+            return None
+        return list(rows[0]['text_embedding'])
+
+    def remove(self, ids: list):
+        """Delete entries by primary key."""
+
+        if not ids:
+            return
+
+        collection = self.milv_wrapper.collection
+        BATCH_SIZE = 256  # keep delete expressions well under Milvus expression-length limits
+        for i in range(0, len(ids), BATCH_SIZE):
+            batch = ids[i:i + BATCH_SIZE]
+            expr = 'id in [' + ', '.join(f'"{entry_id}"' for entry_id in batch) + ']'
+            collection.delete(expr)
+        collection.flush()
+
+    def apply_policy(self, policy: MemoryPolicy = None, now: float = None) -> PolicyResult:
+        """Run a memory management policy over the collection and delete what it selects.
+
+        Falls back to the policy configured at construction time when none is
+        passed. `now` defaults to the newest stored timestamp (see
+        StaleDuplicatePolicy); pass time.time() to age entries against the
+        wall clock instead.
+        """
+
+        policy = policy if policy is not None else self.policy
+        if policy is None:
+            raise ValueError("No policy provided and no default policy configured")
+
+        # Fetch metadata only and let the policy pull embeddings lazily:
+        # it only compares stale candidates against nearby kept entries, so
+        # this avoids streaming every stored 1024-d vector on each pass.
+        records = self.get_all(include_embedding=False)
+        for record in records:
+            record.embedding_loader = lambda entry_id=record.id: self._fetch_embedding(entry_id)
+
+        result = policy.select_for_removal(records, now=now)
+        if result.drop_ids:
+            self.remove(result.drop_ids)
+        return result
 
     def get_working_memory(self) -> list[MemoryItem]:
         return self.working_memory
@@ -143,9 +262,17 @@ class MilvusMemory(Memory):
 
         self.milv_wrapper = MilvusWrapper(self.db_collection_name, self.db_ip, self.db_port, drop_collection=drop_collection)
 
+        if is_local_milvus(self.db_ip):
+            # Reuse the Milvus Lite connection MilvusWrapper just opened:
+            # langchain's Milvus cannot parse a local file uri itself, but it
+            # will reuse an existing pymilvus connection with the same address.
+            connection_args = connections.get_connection_addr('default')
+        else:
+            connection_args = {"host": self.db_ip, "port": self.db_port}
+
         text_vector_db = Milvus(
             self.embedder,
-            connection_args={"host": self.db_ip, "port": self.db_port},
+            connection_args=connection_args,
             collection_name=self.db_collection_name,
             vector_field='text_embedding',
             text_field='caption',
@@ -155,7 +282,7 @@ class MilvusMemory(Memory):
 
         self.position_vector_db = Milvus(
             self.embedder, # we will ignore this
-            connection_args={"host": self.db_ip, "port": self.db_port},
+            connection_args=connection_args,
             collection_name=self.db_collection_name,
             vector_field='position',
             text_field='caption',
@@ -163,7 +290,7 @@ class MilvusMemory(Memory):
 
         self.time_vector_db = Milvus(
             self.embedder, # we will ignore this
-            connection_args={"host": self.db_ip, "port": self.db_port},
+            connection_args=connection_args,
             collection_name=self.db_collection_name,
             vector_field='time',
             text_field='caption',
