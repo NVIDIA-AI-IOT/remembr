@@ -1,15 +1,10 @@
 """Integration tests for MilvusMemory lifelong memory management.
 
-Runs against a MilvusDB server on 127.0.0.1:19530 when one is reachable (see
-README setup), and otherwise falls back to Milvus Lite (an embedded,
-file-backed Milvus, installed separately via `pip install milvus-lite`) so the
-tests need no docker. The module is skipped when neither backend is available. The HuggingFace embedder
-is replaced with a lightweight deterministic stand-in so the tests do not
+Backend selection (server / Milvus Lite / skip) lives in milvus_test_utils
+and the shared `milvus_db_address` fixture. The HuggingFace embedder is
+replaced with a lightweight deterministic stand-in so the tests do not
 download a model.
 """
-
-import hashlib
-import socket
 
 import pytest
 
@@ -17,67 +12,24 @@ pymilvus = pytest.importorskip('pymilvus')
 pytest.importorskip('langchain_community')
 pytest.importorskip('langchain_huggingface')
 
-MILVUS_IP = '127.0.0.1'
-MILVUS_PORT = 19530
+from milvus_test_utils import (
+    MILVUS_PORT,
+    FakeEmbedder,
+    milvus_lite_available,
+    milvus_server_reachable,
+)
+
 COLLECTION = 'test_lifelong_memory_policy'
 
 T0 = 1_722_000_000.0
 
-
-def _milvus_server_reachable() -> bool:
-    try:
-        with socket.create_connection((MILVUS_IP, MILVUS_PORT), timeout=2):
-            return True
-    except OSError:
-        return False
-
-
-def _milvus_lite_available() -> bool:
-    try:
-        import milvus_lite  # noqa: F401
-        return True
-    except ImportError:
-        return False
-
-
-_HAS_SERVER = _milvus_server_reachable()
-_HAS_LITE = _milvus_lite_available()
-
 pytestmark = pytest.mark.skipif(
-    not (_HAS_SERVER or _HAS_LITE),
-    reason=f'no MilvusDB at {MILVUS_IP}:{MILVUS_PORT} and milvus-lite is not installed')
-
-
-class FakeEmbedder:
-    """Deterministic bag-of-words embedding: same words -> same vector."""
-
-    DIM = 1024
-
-    def embed_query(self, text: str):
-        vector = [0.0] * self.DIM
-        for token in (text or '').lower().split():
-            digest = hashlib.sha256(token.encode()).digest()
-            index = int.from_bytes(digest[:4], 'little') % self.DIM
-            vector[index] += 1.0
-        if not any(vector):
-            vector[0] = 1.0
-        return vector
-
-    def embed_documents(self, texts):
-        return [self.embed_query(t) for t in texts]
-
-
-@pytest.fixture(scope='session')
-def db_address(tmp_path_factory):
-    if _HAS_SERVER:
-        return MILVUS_IP
-    # pymilvus keeps one connection per alias, so every test must share the
-    # same Milvus Lite file; collections are dropped between tests instead.
-    return str(tmp_path_factory.mktemp('milvus') / 'remembr_test.db')
+    not (milvus_server_reachable() or milvus_lite_available()),
+    reason='no MilvusDB server reachable and milvus-lite is not installed')
 
 
 @pytest.fixture
-def make_memory(monkeypatch, db_address):
+def make_memory(monkeypatch, milvus_db_address):
     import remembr.memory.milvus_memory as milvus_memory_module
 
     monkeypatch.setattr(milvus_memory_module, 'HuggingFaceEmbeddings',
@@ -88,7 +40,7 @@ def make_memory(monkeypatch, db_address):
     created = []
 
     def factory(**kwargs):
-        mem = MilvusMemory(COLLECTION, db_ip=db_address, db_port=MILVUS_PORT, **kwargs)
+        mem = MilvusMemory(COLLECTION, db_ip=milvus_db_address, db_port=MILVUS_PORT, **kwargs)
         mem.reset(drop_collection=True)
         created.append(mem)
         return mem
@@ -110,6 +62,12 @@ def _insert(memory, caption, t, position=(0.0, 0.0, 0.0)):
     memory.insert(MemoryItem(caption=caption, time=t, position=list(position), theta=0.0))
 
 
+def test_get_all_on_empty_collection(memory):
+    # Regression: vector output fields on an empty collection crash
+    # milvus-lite; get_all must probe first and return [].
+    assert memory.get_all() == []
+
+
 def test_get_all_roundtrip(memory):
     _insert(memory, 'i see a desk', T0, position=(1.0, 2.0, 3.0))
     _insert(memory, 'i see a hallway', T0 + 5, position=(4.0, 5.0, 6.0))
@@ -124,6 +82,32 @@ def test_get_all_roundtrip(memory):
     assert desk.item.position == pytest.approx([1.0, 2.0, 3.0])
     assert desk.item.time == pytest.approx(T0, abs=1.0)
     assert len(desk.embedding) == FakeEmbedder.DIM
+
+
+def test_get_all_without_query_iterator_fallback(memory):
+    # Exercise the fallback branch for old pymilvus versions by hiding
+    # query_iterator behind a proxy.
+    _insert(memory, 'i see a desk', T0)
+    _insert(memory, 'i see a hallway', T0 + 5)
+    memory.milv_wrapper.collection.flush()
+
+    class NoIteratorProxy:
+        def __init__(self, collection):
+            self._collection = collection
+
+        def __getattr__(self, name):
+            if name == 'query_iterator':
+                raise AttributeError(name)
+            return getattr(self._collection, name)
+
+    real_collection = memory.milv_wrapper.collection
+    memory.milv_wrapper.collection = NoIteratorProxy(real_collection)
+    try:
+        records = memory.get_all()
+    finally:
+        memory.milv_wrapper.collection = real_collection
+
+    assert sorted(r.item.caption for r in records) == ['i see a desk', 'i see a hallway']
 
 
 def test_remove_deletes_by_id(memory):

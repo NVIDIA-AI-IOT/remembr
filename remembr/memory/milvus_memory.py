@@ -171,6 +171,15 @@ class MilvusMemory(Memory):
         collection = self.milv_wrapper.collection
         collection.load()
 
+        # Probe with a scalar-only query first: requesting vector output
+        # fields from a completely empty collection crashes some backends
+        # (milvus-lite segcore assert), and an empty scan has nothing to
+        # fetch anyway. Strong consistency so unflushed inserts are seen.
+        probe = collection.query(expr='id != ""', output_fields=['id'], limit=1,
+                                 consistency_level='Strong')
+        if not probe:
+            return []
+
         fields = ['id', 'position', 'theta', 'time', 'caption']
         if include_embedding:
             fields.append('text_embedding')
