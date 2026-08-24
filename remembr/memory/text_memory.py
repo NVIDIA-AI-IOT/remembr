@@ -52,6 +52,9 @@ class TextMemory(Memory):
             t = strftime('%Y-%m-%d %H:%M:%S', t)
 
             s = f"At time={t}, the robot was at an average position of {np.array(doc.position).round(3).tolist()} with an average orientation of {doc.theta} radians. "
-            s += f"The robot saw the following: {doc.caption}\n\n"
+            if getattr(doc, 'camera_id', ''):
+                s += f"Its '{doc.camera_id}' camera saw the following: {doc.caption}\n\n"
+            else:
+                s += f"The robot saw the following: {doc.caption}\n\n"
             out_string += s
         return out_string

@@ -44,18 +44,23 @@ class MilvusWrapper:
         
         if drop_collection:
             utility.drop_collection(collection_name)
-        
-        fields = [
-            FieldSchema(name='id', dtype=DataType.VARCHAR, description='ids', is_primary=True, auto_id=False, max_length=1000),
-            FieldSchema(name='text_embedding', dtype=DataType.FLOAT_VECTOR, description='embedding vectors', dim=dim),
-            FieldSchema(name='position', dtype=DataType.FLOAT_VECTOR, description='position of robot', dim=3),
-            FieldSchema(name='theta', dtype=DataType.FLOAT, description='rotation of robot', dim=1),
-            FieldSchema(name='time', dtype=DataType.FLOAT_VECTOR, description='time', dim=2),
-            FieldSchema(name='caption', dtype=DataType.VARCHAR, description='caption string', max_length=3000),
 
-        ]
-        schema = CollectionSchema(fields=fields, description='text image search')
-        collection = Collection(name=collection_name, schema=schema)
+        if utility.has_collection(collection_name):
+            # Open existing collections with their stored schema so databases
+            # created before newer fields (e.g. camera_id) keep working.
+            collection = Collection(name=collection_name)
+        else:
+            fields = [
+                FieldSchema(name='id', dtype=DataType.VARCHAR, description='ids', is_primary=True, auto_id=False, max_length=1000),
+                FieldSchema(name='text_embedding', dtype=DataType.FLOAT_VECTOR, description='embedding vectors', dim=dim),
+                FieldSchema(name='position', dtype=DataType.FLOAT_VECTOR, description='position of robot', dim=3),
+                FieldSchema(name='theta', dtype=DataType.FLOAT, description='rotation of robot', dim=1),
+                FieldSchema(name='time', dtype=DataType.FLOAT_VECTOR, description='time', dim=2),
+                FieldSchema(name='caption', dtype=DataType.VARCHAR, description='caption string', max_length=3000),
+                FieldSchema(name='camera_id', dtype=DataType.VARCHAR, description='camera that produced the caption', max_length=100),
+            ]
+            schema = CollectionSchema(fields=fields, description='text image search')
+            collection = Collection(name=collection_name, schema=schema)
 
         # create IVF_FLAT index for collection.
         index_params = {
@@ -137,9 +142,17 @@ class MilvusMemory(Memory):
         self.reset(drop_collection=False)
 
 
+    @property
+    def has_camera_field(self) -> bool:
+        # Collections created before multi-camera support lack the field.
+        return any(f.name == 'camera_id'
+                   for f in self.milv_wrapper.collection.schema.fields)
+
     def insert(self, item: MemoryItem, text_embedding=None):
 
         memory_dict = asdict(item)
+        if not self.has_camera_field:
+            memory_dict.pop('camera_id', None)
         # time alone is not collision-free at high insert rates, so add a uuid
         # suffix to keep primary keys unique and deletions precise
         memory_dict['id'] = f"{time.time()}-{uuid.uuid4().hex[:8]}"
@@ -181,6 +194,8 @@ class MilvusMemory(Memory):
             return []
 
         fields = ['id', 'position', 'theta', 'time', 'caption']
+        if self.has_camera_field:
+            fields.append('camera_id')
         if include_embedding:
             fields.append('text_embedding')
 
@@ -209,6 +224,7 @@ class MilvusMemory(Memory):
                 time=float(row['time'][0]) + self.time_offset,
                 position=list(row['position']),
                 theta=row['theta'],
+                camera_id=row.get('camera_id', ''),
             )
             embedding = list(row['text_embedding']) if include_embedding else None
             records.append(MemoryRecord(id=row['id'], item=item, embedding=embedding))
@@ -381,7 +397,15 @@ class MilvusMemory(Memory):
             t = strftime('%Y-%m-%d %H:%M:%S', t)
 
             s = f"At time={t}, the robot was at an average position of {np.array(doc.metadata['position']).round(3).tolist()}."
-            s += f"The robot saw the following: {doc.page_content}\n\n"
+            camera_id = doc.metadata.get('camera_id', '')
+            if camera_id:
+                theta = doc.metadata.get('theta')
+                if theta is not None:
+                    s += f"Its '{camera_id}' camera was facing {round(float(theta), 3)} radians and saw the following: {doc.page_content}\n\n"
+                else:
+                    s += f"Its '{camera_id}' camera saw the following: {doc.page_content}\n\n"
+            else:
+                s += f"The robot saw the following: {doc.page_content}\n\n"
             out_string += s
         return out_string
 

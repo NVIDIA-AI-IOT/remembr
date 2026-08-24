@@ -7,6 +7,10 @@ class MemoryItem:
     time: float
     position: list
     theta: float
+    # Which camera produced the caption ('' when unknown / single-camera).
+    # In multi-camera setups, theta is the viewing direction of this camera
+    # (robot yaw + camera mounting offset), not the robot's base heading.
+    camera_id: str = ''
 
     @classmethod
     def from_dict(cls, dict_input):      
@@ -19,6 +23,8 @@ class MemoryItem:
         # Not every method will use a caption, so we set it to none in those cases
         if self.caption is None:
             self.caption = ''
+        if self.camera_id is None:
+            self.camera_id = ''
 
 
 class Memory:
