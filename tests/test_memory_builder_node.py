@@ -9,6 +9,7 @@ the policy/prune_every plumbing into MilvusMemory.
 """
 
 import importlib
+import math
 import sys
 import types
 from pathlib import Path
@@ -132,11 +133,12 @@ def make_node(node_module, monkeypatch, milvus_db_address):
         node.memory.milv_wrapper.drop_collection()
 
 
-def make_pose(x, y, t):
+def make_pose(x, y, t, yaw=0.0):
     msg = PoseWithCovarianceStamped()
     msg.pose = SimpleNamespace(pose=SimpleNamespace(
         position=SimpleNamespace(x=x, y=y, z=0.0),
-        orientation=SimpleNamespace(x=0.0, y=0.0, z=0.0, w=1.0)))
+        orientation=SimpleNamespace(x=0.0, y=0.0,
+                                    z=math.sin(yaw / 2.0), w=math.cos(yaw / 2.0))))
     msg.header = SimpleNamespace(stamp=SimpleNamespace(sec=int(t), nanosec=0))
     return msg
 
@@ -150,15 +152,16 @@ def test_node_wiring_and_caption_insert(make_node):
     # Both subscriptions are registered with callbacks that actually exist.
     callbacks = {topic: callback for _, topic, callback in node.subscriptions}
     assert callbacks['/amcl_pose'] == node.pose_callback
-    assert callbacks['/caption'] == node.caption_callback
+    caption_callback = callbacks['/caption']
+    assert callable(caption_callback)
 
     # A caption arriving before any pose is ignored rather than crashing.
-    node.caption_callback(String('i see a desk'))
+    caption_callback(String('i see a desk'))
     assert node.memory.get_all() == []
 
     # pose + caption -> a MemoryItem lands in the DB with the pose's data.
     node.pose_callback(make_pose(1.0, 2.0, T0))
-    node.caption_callback(String('i see a desk'))
+    caption_callback(String('i see a desk'))
     node.memory.milv_wrapper.collection.flush()
 
     records = node.memory.get_all()
@@ -166,6 +169,49 @@ def test_node_wiring_and_caption_insert(make_node):
     assert records[0].item.caption == 'i see a desk'
     assert records[0].item.position == pytest.approx([1.0, 2.0, 0.0])
     assert records[0].item.time == pytest.approx(T0, abs=1.0)
+    # The single-camera default tags entries as the front camera at offset 0.
+    assert records[0].item.camera_id == 'front'
+    assert records[0].item.theta == pytest.approx(0.0)
+
+
+def test_multi_camera_captions_store_camera_id_and_view_direction(make_node):
+    node = make_node(caption_topics=['/caption/front', '/caption/left', '/caption/rear'],
+                     camera_ids=['front', 'left', 'rear'],
+                     camera_yaw_offsets=[0.0, math.pi / 2, math.pi])
+
+    callbacks = {topic: callback for _, topic, callback in node.subscriptions}
+    assert set(callbacks) == {'/amcl_pose', '/caption/front', '/caption/left', '/caption/rear'}
+
+    # Robot facing +90deg; each camera's caption should land at the robot
+    # yaw plus its mounting offset, wrapped to [-pi, pi].
+    node.pose_callback(make_pose(1.0, 2.0, T0, yaw=math.pi / 2))
+    callbacks['/caption/front'](String('a desk ahead'))
+    callbacks['/caption/left'](String('a plant to the left'))
+    callbacks['/caption/rear'](String('a hallway behind'))
+    node.memory.milv_wrapper.collection.flush()
+
+    records = node.memory.get_all()
+    by_camera = {record.item.camera_id: record.item for record in records}
+    assert set(by_camera) == {'front', 'left', 'rear'}
+
+    assert by_camera['front'].caption == 'a desk ahead'
+    assert by_camera['front'].theta == pytest.approx(math.pi / 2)
+    assert by_camera['left'].theta == pytest.approx(math.pi)
+    # pi/2 + pi wraps to -pi/2 rather than growing past pi.
+    assert by_camera['rear'].theta == pytest.approx(-math.pi / 2)
+    # All cameras share the same robot pose.
+    for item in by_camera.values():
+        assert item.position == pytest.approx([1.0, 2.0, 0.0])
+
+
+def test_mismatched_camera_params_are_rejected(node_module, monkeypatch, milvus_db_address):
+    monkeypatch.setattr(FakeNode, 'param_overrides', {
+        'db_collection': COLLECTION, 'db_ip': milvus_db_address,
+        'caption_topics': ['/caption/front', '/caption/rear'],
+        'camera_ids': ['front'],
+        'camera_yaw_offsets': [0.0, 3.14]})
+    with pytest.raises(ValueError, match='same length'):
+        node_module.MemoryBuilderNode()
 
 
 def test_node_pruning_params_reach_the_policy(make_node):
@@ -192,13 +238,15 @@ def test_node_auto_prunes_through_caption_callback(make_node):
                      pruning_position_radius=1.0,
                      pruning_similarity_threshold=0.9)
 
+    caption_callback = {topic: callback for _, topic, callback in node.subscriptions}['/caption']
+
     # Four stale duplicates at the same spot...
     for i in range(4):
         node.pose_callback(make_pose(0.0, 0.0, T0 + i))
-        node.caption_callback(String('i see a desk'))
+        caption_callback(String('i see a desk'))
     # ...then a much newer one; the 5th insert triggers the pruning pass.
     node.pose_callback(make_pose(0.0, 0.0, T0 + 10_000))
-    node.caption_callback(String('i see a desk'))
+    caption_callback(String('i see a desk'))
     node.memory.milv_wrapper.collection.flush()
 
     records = node.memory.get_all()

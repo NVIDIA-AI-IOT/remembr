@@ -62,6 +62,64 @@ def _insert(memory, caption, t, position=(0.0, 0.0, 0.0)):
     memory.insert(MemoryItem(caption=caption, time=t, position=list(position), theta=0.0))
 
 
+def test_camera_id_roundtrip(memory):
+    from remembr.memory.memory import MemoryItem
+
+    memory.insert(MemoryItem(caption='a plant to the left', time=T0,
+                             position=[0.0, 0.0, 0.0], theta=1.57, camera_id='left'))
+    _insert(memory, 'i see a desk', T0 + 5)  # no camera_id -> stored as ''
+    memory.milv_wrapper.collection.flush()
+
+    by_caption = {r.item.caption: r.item for r in memory.get_all()}
+    assert by_caption['a plant to the left'].camera_id == 'left'
+    assert by_caption['i see a desk'].camera_id == ''
+
+
+def test_insert_into_pre_camera_collection(monkeypatch, milvus_db_address):
+    """Collections created before the camera_id field keep working."""
+
+    from pymilvus import (Collection, CollectionSchema, DataType, FieldSchema,
+                          connections, utility)
+
+    collection_name = 'test_pre_camera_collection'
+
+    if milvus_db_address.endswith('.db'):
+        connections.connect(uri=milvus_db_address)
+    else:
+        connections.connect(host=milvus_db_address, port=MILVUS_PORT)
+    utility.drop_collection(collection_name)
+    legacy_fields = [
+        FieldSchema(name='id', dtype=DataType.VARCHAR, is_primary=True, auto_id=False, max_length=1000),
+        FieldSchema(name='text_embedding', dtype=DataType.FLOAT_VECTOR, dim=1024),
+        FieldSchema(name='position', dtype=DataType.FLOAT_VECTOR, dim=3),
+        FieldSchema(name='theta', dtype=DataType.FLOAT),
+        FieldSchema(name='time', dtype=DataType.FLOAT_VECTOR, dim=2),
+        FieldSchema(name='caption', dtype=DataType.VARCHAR, max_length=3000),
+    ]
+    Collection(name=collection_name, schema=CollectionSchema(fields=legacy_fields))
+
+    import remembr.memory.milvus_memory as milvus_memory_module
+    monkeypatch.setattr(milvus_memory_module, 'HuggingFaceEmbeddings',
+                        lambda model_name: FakeEmbedder())
+    from remembr.memory.memory import MemoryItem
+    from remembr.memory.milvus_memory import MilvusMemory
+
+    memory = MilvusMemory(collection_name, db_ip=milvus_db_address, db_port=MILVUS_PORT)
+    try:
+        assert not memory.has_camera_field
+        # camera_id is silently dropped instead of failing the insert
+        memory.insert(MemoryItem(caption='i see a desk', time=T0,
+                                 position=[0.0, 0.0, 0.0], theta=0.0, camera_id='front'))
+        memory.milv_wrapper.collection.flush()
+
+        records = memory.get_all()
+        assert len(records) == 1
+        assert records[0].item.caption == 'i see a desk'
+        assert records[0].item.camera_id == ''
+    finally:
+        memory.milv_wrapper.drop_collection()
+
+
 def test_get_all_on_empty_collection(memory):
     # Regression: vector output fields on an empty collection crash
     # milvus-lite; get_all must probe first and return [].

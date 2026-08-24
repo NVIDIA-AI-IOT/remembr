@@ -290,7 +290,35 @@ Below are details about the ROS nodes used in the demo.  You can check the pytho
 | db_collection | The collection name in MilvusDB to add entries. | "test_collection" |
 | db_ip | The MilvusDB IP address. | "127.0.0.1" |
 | pose_topic | The topic to subscribe to get pose information. | "/amcl_pose" | 
-| caption_topic | The topic to subscribe to get captions. | "/caption" |
+| caption_topics | The topics to subscribe to get captions, one per camera. | ["/caption"] |
+| camera_ids | A camera id per caption topic, stored with each memory entry. | ["front"] |
+| camera_yaw_offsets | Each camera's mounting yaw relative to the robot base, in radians (CCW). | [0.0] |
+
+#### Multi-camera setup
+
+A single front camera only captions a slice of what the robot's sensors
+cover. To align semantic caption coverage with the full sensor FOV, run one
+captioner node per camera (each with its own `image_topic` and
+`caption_topic`) and point a single memory builder at all of them:
+
+```bash
+python python/captioner_node.py --ros-args -p image_topic:=/front_stereo_camera/left/image_raw -p caption_topic:=/caption/front
+python python/captioner_node.py --ros-args -p image_topic:=/left_stereo_camera/left/image_raw -p caption_topic:=/caption/left
+python python/captioner_node.py --ros-args -p image_topic:=/right_stereo_camera/left/image_raw -p caption_topic:=/caption/right
+
+python python/memory_builder_node.py --ros-args \
+    -p caption_topics:="['/caption/front', '/caption/left', '/caption/right']" \
+    -p camera_ids:="['front', 'left', 'right']" \
+    -p camera_yaw_offsets:="[0.0, 1.5708, -1.5708]"
+```
+
+Each stored memory entry then carries the camera id, and its `theta` is the
+caption's actual viewing direction (robot yaw + camera mounting offset,
+wrapped to [-pi, pi]) rather than the robot's base heading, so retrieval and
+downstream reasoning know which way each observation was facing. The
+defaults reproduce the original single front-camera behavior, and
+collections created before multi-camera support keep working (their entries
+simply have no camera id).
 
 ### ASR Node
 

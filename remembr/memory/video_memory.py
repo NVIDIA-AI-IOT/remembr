@@ -24,7 +24,9 @@ class ImageMemoryItem(MemoryItem):
     time: float
     position: list
     theta: float
-    image: Image.Image
+    # Defaulted because the MemoryItem base ends in defaulted fields
+    # (camera_id) and dataclasses forbid non-default fields after them.
+    image: Image.Image = None
 
 
 class VideoMemory(Memory):
