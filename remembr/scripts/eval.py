@@ -1,3 +1,4 @@
+import ast
 import json
 import numpy as np
 
@@ -38,7 +39,7 @@ from tools.tools import format_docs
 
 def parse_json(string):
     parsed = re.search(r"```json(.*?)```", string, re.DOTALL| re.IGNORECASE).group(1).strip()
-    return eval(parsed)
+    return ast.literal_eval(parsed)
 
 # we can have binary, position-based, time-based, or description-based. let's answer accordingly
 def evaluate_output(qa_instance, predicted):
@@ -52,7 +53,7 @@ def evaluate_output(qa_instance, predicted):
 
         # compute L2 loss between predicted['binary'] and answer
         if type(predicted['position']) == str:
-            predicted['position'] = eval(predicted['position'])
+            predicted['position'] = ast.literal_eval(predicted['position'])
         pred_pos = np.array(predicted['position'])
 
         dist = np.linalg.norm(answer - pred_pos)
@@ -78,7 +79,7 @@ def evaluate_output(qa_instance, predicted):
 
         # compute L2 loss between predicted['binary'] and answer
         if type(predicted['time']) == str:
-            predicted['time'] = eval(predicted['time'])
+            predicted['time'] = ast.literal_eval(predicted['time'])
         pred_time = np.array(predicted['time'])
 
         dist = abs(answer - pred_time)
@@ -91,7 +92,7 @@ def evaluate_output(qa_instance, predicted):
 
         # compute L2 loss between predicted['binary'] and answer
         if type(predicted['duration']) == str:
-            predicted['duration'] = eval(predicted['duration'])
+            predicted['duration'] = ast.literal_eval(predicted['duration'])
         pred_time = np.array(predicted['duration'])
 
         dist = abs(answer - pred_time)

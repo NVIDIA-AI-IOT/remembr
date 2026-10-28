@@ -1,3 +1,4 @@
+import ast
 import sys, os
 sys.path.append(sys.path[0] + '/..')
 
@@ -139,7 +140,7 @@ class GradioDemo:
 
             response = output['generate']['messages'][-1]
 
-            out_dict = eval(response)
+            out_dict = ast.literal_eval(response)
 
             # Now let's output only the text output
             response = out_dict['text']

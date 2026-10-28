@@ -1,5 +1,6 @@
 from typing import Annotated, Literal, Sequence, TypedDict
 import traceback
+import ast
 import sys, re
 
 # from langchain_openai import OpenAIEmbeddings
@@ -59,7 +60,7 @@ def inspect(state):
 
 def parse_json(string):
     parsed = re.search(r"```json(.*?)```", string, re.DOTALL| re.IGNORECASE).group(1).strip()
-    return eval(parsed)
+    return ast.literal_eval(parsed)
 
 class AgentState(TypedDict):
     # The add_messages function defines how an update should be processed
@@ -314,7 +315,7 @@ class ReMEmbRAgent(Agent):
         try:
             if '```json' not in response:
                 # try parsing on its own since we cannot always trust llms
-                parsed = eval(response) 
+                parsed = ast.literal_eval(response) 
             else:
                 parsed = parse_json(response)
 
@@ -326,7 +327,7 @@ class ReMEmbRAgent(Agent):
                     raise ValueError("Missing all the required keys during generate. Retrying...")
                 
             if type(parsed['position']) == str:
-                parsed['position'] = eval(parsed['position'])
+                parsed['position'] = ast.literal_eval(parsed['position'])
             
             if (parsed['position'] is not None) and len(parsed['position']) != 3:
                 raise ValueError(f"Shape of position was incorrect. {parsed['position']}. Retrying...")
@@ -400,7 +401,7 @@ class ReMEmbRAgent(Agent):
 
         if '```json' not in response:
             # try parsing on its own since we cannot always trust llms
-            parsed = eval(response) 
+            parsed = ast.literal_eval(response) 
         else:
             parsed = parse_json(response)
 
